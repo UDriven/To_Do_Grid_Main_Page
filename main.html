@@ -45,10 +45,9 @@
         #sidebar,
         #main-content {
             transition: all 0.3s ease-in-out;
-
         }
 
-        .to-do-grid{
+        .to-do-grid {
             border-radius: 10px;
         }
 
@@ -73,25 +72,175 @@
             animation: bouncy 0.4s ease-out;
         }
 
-        .grid-panel{
+        .grid-panel {
             border-radius: 10px;
             background-color: rgba(230, 230, 250, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            overflow: hidden;
         }
 
-        .grid-panel:hover{
+        .grid-panel:hover {
             background-color: rgba(230, 230, 250, 0.2);
-            transform: scale(1.12);
+            transform: scale(1.05);
         }
 
-        /* MODIFIED: Made nav items visible by default (no JS) */
+        .grid-panel.active {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .grid-panel.completed {
+            background-color: rgba(0, 255, 0, 0.2);
+        }
+
+        .grid-panel.paused {
+            background-color: rgba(255, 165, 0, 0.2);
+        }
+
+        .task-name {
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .task-time {
+            font-size: 16px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
         .nav-item-animate {
             opacity: 1;
             transform: scale(1) translateY(0);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b, #312e81);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.8);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-btn-primary {
+            background: #6366f1;
+            color: #fff;
+        }
+
+        .modal-btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .modal-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .modal-btn-danger:hover {
+            background: #dc2626;
         }
     </style>
 </head>
 
 <body class="text-white">
+    <!-- Task Name Modal -->
+    <div id="taskNameModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Create New Task</h2>
+            <input type="text" id="taskNameInput" class="modal-input" placeholder="Enter task name..." />
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeTaskNameModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="createTask()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Complete Modal -->
+    <div id="taskCompleteModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Complete Task?</h2>
+            <p id="completeTaskName" style="margin-bottom: 16px; color: #cbd5e1;"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeTaskCompleteModal()">Cancel</button>
+                <button class="modal-btn modal-btn-danger" onclick="completeTask()">Complete</button>
+            </div>
+        </div>
+    </div>
+
     <div class="flex min-h-screen">
         <aside id="sidebar" class="glass-effect w-64 flex-shrink-0 h-screen flex flex-col p-4 fixed z-40">
             <div class="flex items-center justify-between text-2xl font-bold text-white mb-10 pl-2">
@@ -164,536 +313,357 @@
 
         <main id="main-content" class="flex-1 ml-64 p-8">
             <div class="glass-effect rounded-xl p-6 main-content-panel animate-bouncy">
-
-                <!-- Glass pane ke andar wala part hai ye -->
-                <div style="display: flex;  gap: 20px" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                text-align: center;
-                align-content: flex-end;
-                font-size: larger;
-                font-family: 'Times New Roman', Times, serif;
-                width: 100px;
-                height: 100px;
-              ">00:00:00</div>
-                    <div class="grid-panel" id="btn" style="
-                text-align: center;
-                align-content: flex-end;
-                font-size: larger;
-                font-family: 'Times New Roman', Times, serif;
-                width: 100px;
-                height: 100px;
-              ">00:00:00</div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-            </div>
-                <div style="display: flex; margin-top: 20px; gap: 20px;" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-            </div>
-                <div style="display: flex; margin-top: 20px; gap: 20px;" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-            </div>
-                <div style="display: flex; margin-top: 20px; gap: 20px;" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-            </div>
-                <div style="display: flex; margin-top: 20px; gap: 20px;" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-            </div>
-                
-            
-            <div style="display: flex; margin-top: 20px; gap: 20px;" class="to-do-grid-layout">
-
-
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
-                    <div class="grid-panel" id="btn" style="
-                width: 100px;
-                height: 100px;
-              "></div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;" class="to-do-grid-layout">
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                    <div class="grid-panel" style="width: 100px; height: 100px;"></div>
+                </div>
             </div>
         </main>
     </div>
-</body>
 
-
-<!-- I am commenting out this whole script tag so please dont delete it by mistake (Soumya Sagar) -->
-<!-- <script>
-    let activeTimerId = null;
-    const timerData = {};
-    
-
-        // @param {Number} totalSeconds
-        // @return {String} 
-
-    function formatTime (totalSeconds){
-        const hour = String(Math.floor(totalSeconds/3600)).padStart(2,'0')
-        const minute = String(Math.floor((totalSeconds%3600)/60)).padStart(2,'0')
-        const seconds = String(totalSeconds%60).padStart(2,'0')
-        return `${hour}:${minute}:${seconds}`;
+    <script>
+        // Cookie management functions
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
         }
 
-    function stopTimer(Id){
-        const data = timerData[Id];
-        if (data && data.interval){
-            clearInterval(data.interval);
-            data.interval= null;
-            document.getElementById(`btn-${Id}`).textContent = 'start';
-            document.getElementById(`btn-${Id}`).classList.remove('bg-red-600','hover:bg-red-700');
-            document.getElementById(`btn-${Id}`).classList.add('bg-indigo-600','hover:bg-indigo-700');
-            if(activeTimerId === Id){
-                activeTimerId = null;
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
             }
+            return null;
+        }
+
+        // Global state
+        let taskData = {};
+        let activeTaskId = null;
+        let currentPanelId = null;
+
+        function formatTime(totalSeconds) {
+            const hour = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+            const minute = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+            const seconds = String(totalSeconds % 60).padStart(2, "0");
+            return `${hour}:${minute}:${seconds}`;
+        }
+
+        function saveTaskData() {
+            setCookie('udrivenTaskData', JSON.stringify(taskData), 365);
+        }
+
+        function loadTaskData() {
+            const data = getCookie('udrivenTaskData');
+            if (data) {
+                try {
+                    taskData = JSON.parse(data);
+                } catch (e) {
+                    taskData = {};
+                }
+            }
+        }
+
+        function openTaskNameModal(panelId) {
+            currentPanelId = panelId;
+            document.getElementById('taskNameModal').classList.add('show');
+            document.getElementById('taskNameInput').value = '';
+            document.getElementById('taskNameInput').focus();
+        }
+
+        function closeTaskNameModal() {
+            document.getElementById('taskNameModal').classList.remove('show');
+            currentPanelId = null;
+        }
+
+        function createTask() {
+            const taskName = document.getElementById('taskNameInput').value.trim();
+            if (!taskName) {
+                alert('Please enter a task name');
+                return;
+            }
+
+            const now = new Date().toISOString();
+            taskData[currentPanelId] = {
+                name: taskName,
+                createdAt: now,
+                status: 'active',
+                startTime: now,
+                totalSeconds: 0,
+                pauses: []
+            };
+
+            if (activeTaskId !== null && activeTaskId !== currentPanelId) {
+                pauseTask(activeTaskId);
+            }
+
+            activeTaskId = currentPanelId;
+            saveTaskData();
+            updatePanelDisplay(currentPanelId);
+            startTimerInterval(currentPanelId);
+            closeTaskNameModal();
+        }
+
+        function openTaskCompleteModal(panelId) {
+            const task = taskData[panelId];
+            document.getElementById('completeTaskName').textContent = `Are you sure you want to complete "${task.name}"?`;
+            currentPanelId = panelId;
+            document.getElementById('taskCompleteModal').classList.add('show');
+        }
+
+        function closeTaskCompleteModal() {
+            document.getElementById('taskCompleteModal').classList.remove('show');
+            currentPanelId = null;
+        }
+
+        function completeTask() {
+            const task = taskData[currentPanelId];
+            task.status = 'completed';
+            task.completedAt = new Date().toISOString();
             
+            if (task.interval) {
+                clearInterval(task.interval);
+                task.interval = null;
+            }
 
+            if (activeTaskId === currentPanelId) {
+                activeTaskId = null;
+            }
 
-        }
-    }
-
-
-    function startTimer(Id) {
-        if(activeTimerId !== null && activeTimerId !== Id){
-            stopTimer(activeTimerId)
-        }
-        if(!timerData[Id]){
-            timerData[Id] = {interval: null , seconds:0};
-        }
-        const data = timerData[Id]
-
-        if(!data.interval){
-            activeTimerId = Id;
-            document.getElementById(`btn-${Id}`).textContent='stop'
-            document.getElementById(`btn-${Id}`).classList.remove('bg-indigo-600','hover:bg-indigo-700');
-            document.getElementById(`btn-${id}`).classList.add('bg-red-600','hover:bg-red-700');
-
-            data.interval= setInterval(() => {
-                data.seconds++ ;
-                document.getElementById(`timer-${Id}`).textContent=formatTime(data.seconds)
-            }, 1000)
-        }
+            saveTaskData();
+            updatePanelDisplay(currentPanelId);
+            closeTaskCompleteModal();
         }
 
+        function pauseTask(panelId) {
+            const task = taskData[panelId];
+            if (task.interval) {
+                clearInterval(task.interval);
+                task.interval = null;
+            }
+
+            const now = new Date().toISOString();
+            const lastPause = task.pauses[task.pauses.length - 1];
+            
+            if (!lastPause || lastPause.resumeTime) {
+                task.pauses.push({ pauseTime: now });
+            }
+
+            task.status = 'paused';
+            saveTaskData();
+            updatePanelDisplay(panelId);
+        }
+
+        function resumeTask(panelId) {
+            const task = taskData[panelId];
+            const now = new Date().toISOString();
+            const lastPause = task.pauses[task.pauses.length - 1];
+            
+            if (lastPause && !lastPause.resumeTime) {
+                lastPause.resumeTime = now;
+            }
+
+            task.status = 'active';
+            
+            if (activeTaskId !== null && activeTaskId !== panelId) {
+                pauseTask(activeTaskId);
+            }
+
+            activeTaskId = panelId;
+            saveTaskData();
+            updatePanelDisplay(panelId);
+            startTimerInterval(panelId);
+        }
+
+        function calculateTotalSeconds(task) {
+            let totalSeconds = 0;
+            const now = new Date();
+            const startTime = new Date(task.startTime);
+            
+            // Calculate total elapsed time from start
+            let elapsedMs = now - startTime;
+            
+            // Subtract all pause durations
+            task.pauses.forEach(pause => {
+                const pauseStart = new Date(pause.pauseTime);
+                const pauseEnd = pause.resumeTime ? new Date(pause.resumeTime) : (task.status === 'paused' ? now : pauseStart);
+                elapsedMs -= (pauseEnd - pauseStart);
+            });
+            
+            totalSeconds = Math.floor(elapsedMs / 1000);
+            return Math.max(0, totalSeconds);
+        }
+
+        function startTimerInterval(panelId) {
+            const task = taskData[panelId];
+            if (task.interval) {
+                clearInterval(task.interval);
+            }
+
+            // Update immediately with calculated time
+            task.totalSeconds = calculateTotalSeconds(task);
+            updatePanelDisplay(panelId);
+
+            task.interval = setInterval(() => {
+                task.totalSeconds = calculateTotalSeconds(task);
+                updatePanelDisplay(panelId);
+            }, 1000);
+        }
+
+        function updatePanelDisplay(panelId) {
+            const panel = document.querySelector(`[data-id='${panelId}']`);
+            const task = taskData[panelId];
+
+            panel.classList.remove('active', 'completed', 'paused');
+            
+            if (task.status === 'active') {
+                panel.classList.add('active');
+            } else if (task.status === 'completed') {
+                panel.classList.add('completed');
+            } else if (task.status === 'paused') {
+                panel.classList.add('paused');
+            }
+
+            panel.innerHTML = `
+                <div class="task-name">${task.name}</div>
+                <div class="task-time">${formatTime(task.totalSeconds)}</div>
+            `;
+        }
+
+        function handlePanelClick(panelId) {
+            const task = taskData[panelId];
+
+            if (!task) {
+                openTaskNameModal(panelId);
+            } else if (task.status === 'completed') {
+                return;
+            } else if (task.status === 'active') {
+                openTaskCompleteModal(panelId);
+            } else if (task.status === 'paused') {
+                resumeTask(panelId);
+            }
+        }
+
+        function initializePanels() {
+            const panels = document.querySelectorAll('.grid-panel');
+            panels.forEach((panel, index) => {
+                const panelId = index + 1;
+                panel.setAttribute('data-id', panelId);
+                
+                if (taskData[panelId]) {
+                    const task = taskData[panelId];
+                    
+                    // Recalculate total seconds for active tasks on load
+                    if (task.status === 'active') {
+                        task.totalSeconds = calculateTotalSeconds(task);
+                        activeTaskId = panelId;
+                        startTimerInterval(panelId);
+                    } else if (task.status === 'paused') {
+                        task.totalSeconds = calculateTotalSeconds(task);
+                    }
+                    
+                    updatePanelDisplay(panelId);
+                }
+
+                panel.addEventListener('click', () => handlePanelClick(panelId));
+            });
+        }
+
+        // Handle Enter key in task name input
         document.addEventListener('DOMContentLoaded', () => {
-            const timerButtons = document.querySelectorAll('.timer-btn');
+            loadTaskData();
+            initializePanels();
 
-            timerButtons.forEach(button => {
-                const Id = parseInt(button.dataset.Id);
-                
-                
-                timerData[Id] = { interval: null, seconds: 0 };
+            document.getElementById('taskNameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    createTask();
+                }
+            });
 
-                button.addEventListener('click', () => {
-                    if (activeTimerId === Id) {
-                        
-                        stopTimer(Id);
-                    } else if (activeTimerId === null) {
-                        
-                        startTimer(Id);
+            // Sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.addEventListener('click', () => {
+                    const isCollapsed = sidebar.classList.contains('w-16');
+                    if (isCollapsed) {
+                        sidebar.classList.replace('w-16', 'w-64');
+                        mainContent.classList.replace('ml-16', 'ml-64');
+                        sidebarTexts.forEach(el => el.style.display = 'block');
                     } else {
-                        
-                        startTimer(Id);
+                        sidebar.classList.replace('w-64', 'w-16');
+                        mainContent.classList.replace('ml-64', 'ml-16');
+                        sidebarTexts.forEach(el => el.style.display = 'none');
                     }
                 });
-            });
-        });
-
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
-        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-        const sidebarTexts = document.querySelectorAll('.sidebar-text');
-        
-        
-        if (sidebarToggleBtn) {
-            sidebarToggleBtn.addEventListener('click', () => {
-                const isCollapsed = sidebar.classList.contains('w-16');
-
-                if (isCollapsed) {
-                    
-                    sidebar.classList.replace('w-16', 'w-64');
-                    mainContent.classList.replace('ml-16', 'ml-64');
-                    sidebarTexts.forEach(el => el.style.display = 'block');
-                } else {
-                    
-                    sidebar.classList.replace('w-64', 'w-16');
-                    mainContent.classList.replace('ml-64', 'ml-16');
-                    sidebarTexts.forEach(el => el.style.display = 'none');
-                }
-            });
-        }
-
-</script> -->
-
-<!-- <script>
-let activeTimerId = null;
-const timerData = {};
-
-//maths logic for the timer
-function formatTime(totalSeconds){
-    const hour = String(Math.floor(totalSeconds/3600)).padStart(2,'0');
-    const minute = String(Math.floor((totalSeconds%3600)/60)).padStart(2,'0');
-    const seconds = String(totalSeconds%60).padStart(2,'0');
-    return `${hour}:${minute}:${seconds}`;
-}
-
-function stopTimer(Id){
-    const data = timerData[Id];
-    if(data && data.interval){
-        clearInterval(data.interval);
-        data.interval = null;
-        document.getElementById(`btn-${Id}`).textContent = formatTime(data.seconds);
-        document.getElementById(`btn-${Id}`).classList.remove('bg-red-600','hover:bg-red-700');
-        document.getElementById(`btn-${Id}`).classList.add('bg-indigo-600','hover:bg-indigo-700');
-        if(activeTimerId === Id){
-            activeTimerId = null;
-        }
-    }
-}
-
-function startTimer(Id){
-    if(activeTimerId !== null && activeTimerId !== Id){
-        stopTimer(activeTimerId);
-    }
-    if(!timerData[Id]){
-        timerData[Id] = { interval: null, seconds: 0 };
-    }
-    const data = timerData[Id];
-
-    if(!data.interval){
-        activeTimerId = Id;
-        const btn = document.getElementById(`btn-${Id}`);
-        btn.textContent = 'stop';
-        btn.classList.remove('bg-indigo-600','hover:bg-indigo-700');
-        btn.classList.add('bg-red-600','hover:bg-red-700');
-
-        data.interval = setInterval(() => {
-            data.seconds++;
-            btn.textContent = formatTime(data.seconds);
-        }, 1000);
-    } else {
-        stopTimer(Id);
-
-    }
-}
-
-// Attach click listeners to your single grid panel with Id
-document.addEventListener('DOMContentLoaded', () => {
-    const panel = document.getElementById(.grid-panel));
-    // Assign unique Id number (e.g., 1)
-    const Id = 1;
-    panel.id = `btn-${Id}`;
-    timerData[Id] = { interval: null, seconds: 0 };
-
-    panel.addEventListener('click', () => {
-        if(activeTimerId === Id){
-            stopTimer(Id);
-        } else {
-            startTimer(Id);
-        }
-    });
-});
-</script> -->
-
-<script>
-let activeTimerId = null;
-const timerData = {};
-
-function formatTime(totalSeconds) {
-  const hour = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-  const minute = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${hour}:${minute}:${seconds}`;
-}
-
-function stopTimer(Id) {
-  const data = timerData[Id];
-  if (data && data.interval) {
-    clearInterval(data.interval);
-    data.interval = null;
-
-    const box = document.querySelector(`[data-id='${Id}']`);
-    box.textContent = formatTime(data.seconds);
-    box.style.backgroundColor = "rgba(230,230,250,0.1)";
-    activeTimerId = null;
-  }
-}
-
-function startTimer(Id) {
-  // pehle se koi timer chal raha ho to use band kar do
-  if (activeTimerId !== null && activeTimerId !== Id) {
-    stopTimer(activeTimerId);
-  }
-
-  if (!timerData[Id]) {
-    timerData[Id] = { interval: null, seconds: 0 };
-  }
-
-  const data = timerData[Id];
-  const box = document.querySelector(`[data-id='${Id}']`);
-
-  if (!data.interval) {
-    activeTimerId = Id;
-    box.style.backgroundColor = "rgba(255,0,0,0.3)";
-    box.textContent = "stop";
-
-    data.interval = setInterval(() => {
-      data.seconds++;
-      box.textContent = formatTime(data.seconds);
-    }, 1000);
-  } else {
-    stopTimer(Id);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const panels = document.querySelectorAll(".grid-panel");
-
-  panels.forEach((panel, index) => {
-    const Id = index + 1; // har box ko ek number do (1,2,3,...)
-    panel.setAttribute("data-id", Id); // store kar do box me
-
-    timerData[Id] = { interval: null, seconds: 0 };
-
-    // jab bhi box pe click kare to start/stop ho
-    panel.addEventListener("click", () => {
-      if (activeTimerId === Id) {
-        stopTimer(Id);
-      } else {
-        startTimer(Id);
-      }
-    });
-  });
-});
-</script>
-
-
+            }
+        });
+    </script>
+</body>
 
 </html>
-
